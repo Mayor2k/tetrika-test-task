@@ -1,8 +1,7 @@
 def appearance(intervals):
     answer = 0
     
-    #lesson_duration = intervals['lesson']
-    #del intervals['lesson']
+    #0 - таймстемпамп, 1 - роль, 2 - вход\выход(1,0) 
     events = []
 
     for interval in intervals:
@@ -13,36 +12,36 @@ def appearance(intervals):
     events.sort()
     print(events)
     
-    #первый элемент: таймстемпамп, второй - статус действия
+    #0: таймстемпамп, 1 - статус действия
     last_actions = {'lesson': [0, 0], 'pupil': [0, 0], 'tutor': [0, 0]}
     
-    for event_index in range(len(events)):
+    for event in events:
         
-        last_actions[events[event_index][1]] = [events[event_index][0], events[event_index][2]]
+        last_actions[event[1]] = event[0], event[2]
         
-        if events[event_index][1] == 'lesson':
-            if events[event_index][2] == 1:
+        if event[1] == 'lesson':
+            if event[2] == 1:
                 
                 if last_actions['pupil'][0] != 0 and last_actions['pupil'][1] != 0:
-                    last_actions['pupil'] = [events[event_index][0], 1]
+                    last_actions['pupil'] = [event[0], 1]
                     
                 if last_actions['tutor'][0] != 0 and last_actions['tutor'][1] != 0:
-                    last_actions['tutor'] = [events[event_index][0], 1]
+                    last_actions['tutor'] = [event[0], 1]
                         
-            elif events[event_index][2] == 0:
+            elif event[2] == 0:
                 
                 if last_actions['pupil'][1] != 0 and last_actions['tutor'][1] != 0:
-                    answer += events[event_index][0] - min(last_actions['pupil'][0], last_actions['tutor'][0])
+                    answer += event[0] - min(last_actions['pupil'][0], last_actions['tutor'][0])
                     
                 break
                 
         else:
-            opposite = 'pupil' if events[event_index][1] == 'tutor' else 'tutor'
+            opposite = 'pupil' if event[1] == 'tutor' else 'tutor'
             
-            if events[event_index][2] == 0:
-                answer +=  last_actions[events[event_index][1]][0] - last_actions[opposite][0]
-            elif events[event_index][2] == 1 and last_actions[opposite][1] != 0:
-                last_actions[opposite] = [events[event_index][0], 1]
+            if event[2] == 0:
+                answer +=  last_actions[event[1]][0] - last_actions[opposite][0]
+            elif event[2] == 1 and last_actions[opposite][1] != 0:
+                last_actions[opposite] = [event[0], 1]
                 
     return answer
 
