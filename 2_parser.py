@@ -23,12 +23,12 @@ def get_animals_count(url):
     soup = BeautifulSoup(wiki_respond, 'lxml')
     categories = [category.children for category in soup.find_all(class_='mw-category mw-category-columns')]
     
-    for subcat in categories:
-        for num in subcat:
-            letter = str(num.h3.string)
+    for category in categories:
+        for elem in category:
+            letter = str(elem.h3.string)
             if is_cyrillic(letter):
                 print(f'Поиск элементов на букву {letter}', end="\r", flush=True)
-                animals_dict[letter] = animals_dict.get(letter, 0) + len(num.find_all('li'))
+                animals_dict[letter] = animals_dict.get(letter, 0) + len(elem.find_all('li'))
             
     url_tag = soup.find(name='a',string="Следующая страница")
     if url_tag != None:
