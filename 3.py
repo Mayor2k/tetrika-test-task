@@ -1,25 +1,42 @@
+'''
+Когда пользователь заходит на страницу урока, мы сохраняем время его захода. Когда пользователь выходит с урока 
+(или закрывает вкладку, браузер – в общем как-то разрывает соединение с сервером), мы фиксируем время выхода с 
+урока. Время присутствия каждого пользователя на уроке хранится у нас в виде интервалов. В функцию передается 
+словарь, содержащий три списка с таймстемпами (время в секундах):
+
+lesson – начало и конец урока
+pupil – интервалы присутствия ученика
+tutor – интервалы присутствия учителя
+
+Интервалы устроены следующим образом – это всегда список из четного количества элементов. Под четными индексами 
+(начиная с 0) время входа на урок, под нечетными - время выхода с урока.Нужно написать функцию, которая получает 
+на вход словарь с интервалами и возвращает время общего присутствия ученика и учителя на уроке (в секундах).
+'''
+
 def appearance(intervals):
     answer = 0
     
-    #0 - таймстемпамп, 1 - роль, 2 - вход\выход(1,0) 
+    # 0 - таймстемпамп, 1 - роль, 2 - вход\выход(1,0) 
     events = []
-
+    
+    # перебираем словарь в лист, и позже соритруем ивенты по возрастанию
     for interval in intervals:
         current_events = intervals[interval]
         for event in range(len(current_events)):
             events.append((current_events[event], interval, int(event%2==0)))
             
     events.sort()
-    print(events)
+    #print(events)
     
-    #0: таймстемпамп, 1 - статус действия
+    # 0: таймстемпамп, 1 - статус действия
     last_actions = {'lesson': [0, 0], 'pupil': [0, 0], 'tutor': [0, 0]}
+    pupils_count = 0
     
     for event in events:
         
         if event[1] == 'lesson':
-            
             if event[2] == 1:
+                # если до начала урока пользователи находились в комнате, то отсчет идет с момента начала урока
                 if last_actions['pupil'][0] != 0 and last_actions['pupil'][1] != 0:
                     last_actions['pupil'] = [event[0], 1]
                     
@@ -27,24 +44,44 @@ def appearance(intervals):
                     last_actions['tutor'] = [event[0], 1]
                         
             elif event[2] == 0:
+                # если к концу урока пользователи находились в комнате, то отсчет заканчинчивается в этот момент
                 if last_actions['pupil'][1] != 0 and last_actions['tutor'][1] != 0:
                     answer += event[0] - min(last_actions['pupil'][0], last_actions['tutor'][0])
                     
                 break
                 
         else:
+            # определение противоположной роли
             opposite = 'pupil' if event[1] == 'tutor' else 'tutor'
             
-            if event[2] == 0 and last_actions[opposite][1] != 0:
-                answer +=  event[0] - max(last_actions[opposite][0],last_actions[event[1]][0])
-            elif event[2] == 1 and last_actions[opposite][1] != 0:
-                last_actions[opposite] = [event[0], 1]
+            if event[2] == 0:
+                # подсчет количества учеников в комнате, если в комнате отстался хоть один пользователь, 
+                # то отсчет подолжается
+                if event[1] == 'pupil': 
+                    pupils_count -= 1
+                    if pupils_count > 0:
+                        continue
                 
+                #подсчет врмемени совместного коннекта после того, как один из пользователей покиунл комнату
+                if last_actions[opposite][1] != 0:
+                    answer +=  event[0] - max(last_actions[opposite][0],last_actions[event[1]][0])
+                
+            elif event[2] == 1:
+                # подсчет количества учеников в комнате, если в комнату зашел еще один ученик,
+                # то отсчет продолжится с того ученика, который зашел раньше всех
+                if event[1] == 'pupil': 
+                    pupils_count += 1
+                    if pupils_count > 1:
+                        continue
+                # задание противоположной роли время совместного коннекта
+                if last_actions[opposite][1] != 0:
+                    last_actions[opposite] = [event[0], 1]
+        
         last_actions[event[1]] = event[0], event[2]
-            
+        
     return answer
 
-'''tests = [
+tests = [
     {'data': {'lesson': [1594663200, 1594666800],
              'pupil': [1594663340, 1594663389, 1594663390, 1594663395, 1594663396, 1594666472],
              'tutor': [1594663290, 1594663430, 1594663443, 1594666473]},
@@ -60,18 +97,10 @@ def appearance(intervals):
              'tutor': [1594692017, 1594692066, 1594692068, 1594696341]},
     'answer': 3565
     },
-]'''
-
-tests = [
-    {'data': {'lesson': [1594702800, 1594706400],
-             'pupil': [1594702789, 1594704500, 1594702807, 1594704542, 1594704512, 1594704513, 1594704564, 1594705150, 1594704581, 1594704582, 1594704734, 1594705009, 1594705095, 1594705096, 1594705106, 1594706480, 1594705158, 1594705773, 1594705849, 1594706480, 1594706500, 1594706875, 1594706502, 1594706503, 1594706524, 1594706524, 1594706579, 1594706641],
-             'tutor': [1594700035, 1594700364, 1594702749, 1594705148, 1594705149, 1594706463]},
-    'answer': 3577
-    }
 ]
 
 if __name__ == '__main__':
    for i, test in enumerate(tests):
        test_answer = appearance(test['data'])
        print(f'{i}: {test_answer}')
-       #assert test_answer == test['answer'], f'Error on test case {i}, got {test_answer}, expected {test["answer"]}'
+       assert test_answer == test['answer'], f'Error on test case {i}, got {test_answer}, expected {test["answer"]}'
